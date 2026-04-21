@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Secure Auth Lab | Amina Zeeshan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main-wrapper">
+
+        <!-- ======= TOP: Auth Dashboard ======= -->
+        <div class="dashboard-container">
+            <div class="control-panel">
+                <div class="top-controls">
+                    <h3>🛡️ Security Controls</h3>
+                    <div class="toggle-group">
+                        <label class="switch"><input type="checkbox" id="sql-protect"><span class="slider"></span></label>
+                        <span>SQL Injection Protection</span>
+                    </div>
+                    <div class="toggle-group">
+                        <label class="switch"><input type="checkbox" id="brute-force-protect"><span class="slider"></span></label>
+                        <span>Brute-Force Protection</span>
+                    </div>
+                    <div class="select-group">
+                        <label>Hashing Algorithm:</label>
+                        <select id="hashing-type">
+                            <option value="none">None (Plain Text)</option>
+                            <option value="sha256">SHA-256</option>
+                        </select>
+                    </div>
+                    <div class="toggle-group" style="margin-top: 15px;">
+                        <label class="switch"><input type="checkbox" id="salt-protect"><span class="slider"></span></label>
+                        <span>Add Secret Salt</span>
+                    </div>
+
+                    <!-- Brute Force Info Box -->
+                    <div class="brute-info-box" id="brute-info-box" style="display:none;">
+                        ⚠️ <b>Protection OFF</b> — Brute Force will keep trying until <b>access is granted</b>. This demonstrates why protection is essential!
+                    </div>
+
+                    <!-- ATTACK SIMULATOR -->
+                    <div class="simulator-box">
+                        <h4>⚡ Attack Simulator</h4>
+                        <button class="sim-btn sql-sim" onclick="simulateSQL()">💉 Simulate SQL Injection</button>
+                        <button class="sim-btn brute-sim" onclick="simulateBrute()">🔨 Simulate Brute Force</button>
+                        <button class="sim-btn rainbow-sim" onclick="simulateRainbowTable()">🌈 Rainbow Table Attack</button>
+
+                        <!-- Progress bar (shared) -->
+                        <div id="brute-progress-wrap">
+                            <div id="brute-msg">Trying passwords...</div>
+                            <div id="brute-bar-outer"><div id="brute-bar-inner"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="db-section">
+                    <h4><span class="pulse">●</span> DATABASE PREVIEW</h4>
+                    <div id="db-view"></div>
+                </div>
+            </div>
+
+            <div class="auth-area">
+                <div class="auth-card">
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="showForm('signin')">Sign In</button>
+                        <button class="tab-btn" onclick="showForm('signup')">Sign Up</button>
+                    </div>
+
+                    <form id="signin-form" class="auth-form">
+                        <h2>Welcome Back</h2>
+                        <input type="text" id="login-user" placeholder="Username / Admin ID">
+                        <input type="password" id="login-pass" placeholder="Password">
+                        <button type="button" id="login-btn" onclick="login()">Authenticate</button>
+                        <div id="status-display">System Status: Ready</div>
+                    </form>
+
+                    <form id="signup-form" class="auth-form hidden">
+                        <h2>Create Account</h2>
+                        <input type="text" id="reg-user" placeholder="New Username">
+                        <input type="password" id="reg-pass" placeholder="Choose Password" oninput="checkStrength(this.value)">
+                        
+                        <!-- PASSWORD STRENGTH METER -->
+                        <div class="strength-wrapper">
+                            <div class="strength-bar">
+                                <div id="strength-fill"></div>
+                            </div>
+                            <span id="strength-label">Password strength</span>
+                        </div>
+                        <ul class="strength-hints" id="strength-hints">
+                            <li id="hint-len">At least 8 characters</li>
+                            <li id="hint-upper">Uppercase letter</li>
+                            <li id="hint-num">Number</li>
+                            <li id="hint-special">Special character (!@#$...)</li>
+                        </ul>
+
+                        <button type="button" onclick="signup()">Register User</button>
+                        <div id="status-display-signup">System Status: Ready</div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= MIDDLE: Admin Module ======= -->
+        <div class="admin-section">
+            <div class="admin-header">
+                <h3>⚙️ Administrative Module</h3>
+            </div>
+            <div class="admin-body">
+                <div class="stats-grid">
+                    <div class="stat-card total">
+                        <div class="stat-number" id="stat-total">0</div>
+                        <div class="stat-label">Total Attempts</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-number" id="stat-success">0</div>
+                        <div class="stat-label">Successful Logins</div>
+                    </div>
+                    <div class="stat-card failed">
+                        <div class="stat-number" id="stat-failed">0</div>
+                        <div class="stat-label">Failed Logins</div>
+                    </div>
+                    <div class="stat-card blocked">
+                        <div class="stat-number" id="stat-blocked">0</div>
+                        <div class="stat-label">Brute Force Blocked</div>
+                    </div>
+                    <div class="stat-card attack">
+                        <div class="stat-number" id="stat-attack">0</div>
+                        <div class="stat-label">Attack Attempts</div>
+                    </div>
+                    <div class="stat-card rate">
+                        <div class="stat-number" id="stat-rate">0%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat-card reg">
+                        <div class="stat-number" id="stat-reg">0</div>
+                        <div class="stat-label">Registrations</div>
+                    </div>
+                </div>
+
+                <div class="locked-section">
+                    <h4>🔒 Locked Accounts</h4>
+                    <div id="locked-accounts-list">
+                        <div class="no-locked">✅ No locked accounts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======= BOTTOM: Audit Log ======= -->
+        <div class="audit-section">
+            <div class="audit-header">
+                <h3>📋 Audit Log — Authentication Activity</h3>
+                <div class="audit-actions">
+                    <button class="export-btn" onclick="exportCSV()">⬇️ Export CSV</button>
+                    <button class="clear-btn" onclick="clearAuditLog()">🗑 Clear Log</button>
+                </div>
+            </div>
+            <div class="audit-table-wrapper">
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Username</th>
+                            <th>Simulated IP</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-log-body">
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:#555; padding:20px;">No activity recorded yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
